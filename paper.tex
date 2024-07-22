@@ -1,0 +1,158 @@
+\documentclass[preprint,12pt]{elsarticle}
+
+\usepackage{stfloats}
+\usepackage{hyperref}
+\usepackage[c3]{optidef}
+\usepackage{amsmath,amssymb,amsfonts,commath,amsthm}
+\usepackage{enumitem}
+\usepackage{subcaption}
+\usepackage{algorithmic}
+\usepackage[ruled, lined, linesnumbered, commentsnumbered, longend]{algorithm2e}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+% Draw table from csv file, allow multi-columns a
+\usepackage{tabularx}
+\usepackage{tabulary}
+\usepackage{longtable}
+\usepackage{verbatim}
+\usepackage{setspace}
+\usepackage{csvsimple,array,filecontents,booktabs}
+
+\usepackage[acronym]{glossaries}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{fact}{Fact}[section]
+\newtheorem{pro}{Problem}
+\loadglsentries{Glossaries}
+
+\journal{Journal of Network and Computer Applications}
+
+\begin{document}
+
+\begin{frontmatter}
+
+    \title{ Problem Specific MOEA/D for Barrier Coverage with Wireless Sensors}
+
+    \affiliation[1]{organization={Hanoi University of Industry},
+        %addressline={298 Cau Dien Street, Minh Khai, Bac Tu Liem District},
+        city={Hanoi},
+        postcode={100000},
+        country={Vietnam}}
+
+    \affiliation[2]{organization={School of Information Technology and Communication, Hanoi University of Science and Technology},
+        %addressline={1 Dai Co Viet Street, Bach Khoa, Hai Ba Trung District},
+        city={Hanoi},
+        postcode={100000},
+        country={Vietnam}}
+
+
+    \begin{abstract}
+
+    \end{abstract}
+
+
+    \begin{keyword}
+        Barrier coverage\sep \textit{k}-strong barrier coverage\sep Wireless directional sensor networks\sep Heterogeneous wireless multimedia wireless sensor networks
+    \end{keyword}
+
+\end{frontmatter}
+
+\label{introduction_sec}
+\section{Introduction}
+In barrier coverage, nodes are deployed in such a manner that it will form a barrier
+in a specific path and transmit the information if they sense possible activities made by intruder to cross the barrier. Barrier coverage is applicable to make boundaries of
+the critical assets or infrastructure, such as country borders, coastal lines, boundaries
+of battlefields, and many more
+
+If a WSN has single connectivity among the sensor nodes then it is called simple connectivity or 1-connectivity. Failure of any single node in such scenario may result in the communication failure in network. Whereas in k-connectivity, in spite of failure of a node, network remains connected by (k-1) number of sensor nodes.
+\section{Related works}\label{relatedwork_sec}
+
+
+\section{Preliminaries and problem formulation}\label{problem}
+\subsection{Preliminaries}
+\subsubsection{Sensing model}
+From literature, two facts about the sensing device can be observed. First one states
+that as the distance increases the sensing ability decreases. Second, sensing ability
+gets improved as the noise reduces. Mainly, two types of sensing models can be
+found in literature based on the detection probability, (i) binary disk-sensing model
+and (ii) probabilistic sensing model. This paper focuses on the second one. Probabilistic sensing model is given by following equation \ref{eq1}
+
+\begin{equation}
+    \label{eq1}
+    \mathcal{C}(O, s_i) = \begin{cases}
+        1                          & {\rm{if } } \quad  d(O,s_i) \le R_S +R_e             \\
+        -e^{{\alpha\beta^\lambda}} & {\rm{if } } \quad  R_S-R_E \le d(O,s_i) \le R_S+ R_e \\
+        0                          & {\rm{if } } \quad  d(O, s_i) \ge R_S+R_e             \\
+    \end{cases}
+\end{equation}
+
+where certainty detection of the sensor nodes is defined by $R_e$ ($R_e$ < $R_s$), $\alpha$, $\beta$, and $\lambda$
+are the detection probability at distance less than or equal to $R_S$ and
+$\beta =
+    d(O, s_i) - (R_S - R_e)$.
+Equation \ref{eq1} depicts that, a point is said to be covered if it lies within a distance $(R_S - R_e)$ from a sensor node, coverage diminishes exponentially as the distance between points and the sensor nodes increases if points are lying within an interval $(R_S - R_e, R_s + R_e)$. The points lying beyond distance $(R_S + R_e)$ are said to be uncovered. In a network, it may be possible that a point might be covered by multiple (k) sensor nodes then a point is known as k-covered.
+\subsubsection{Communication model}
+The simplest communication model which is mostly found in the literature is binary
+disk model. Like the sensing range (RS), communication range (RC) is defined as the
+range up to which it can communicate with other nodes. Based on the transmission
+power level, different sensor nodes have different communication range. Two sensor
+nodes can communicate with each other if they are within the RC
+
+\subsection{Problem formulation}
+In this paper, we address the problem of sensor deployment for continuous monitoring of a linear segment on the x-axis with length L. We consider N static sensors that can be either activated or deactivated. These sensors are randomly distributed over the monitored area using helicopters or unmanned aerial vehicles (UAVs). Each sensor $s_i$ has a unique position $x_i$ and a specific sensing radius $r_i$. With this radius, the coverage range of sensor $s_i$ can be represented as the interval $C(s_i, r_i)$ of length $2r_i$ centered at $x_i$. Additionally, each sensor is associated with a cost $c(s_i, r_i)$, this cost represents the energy consumption during opearion. The objective is to choose a coverage radius $r_i$ for each sensor $s_i$ such that
+\begin{align*}
+    L & \subseteq \bigcup_{s \in S} C(s, r)
+\end{align*}
+and the total cost of the deployment $\sum_{s\in S}c(s, r)$ is minimized. This optimizationproblem is referred to as min-cost-linear-coverage (MCLC).
+
+Decision variable 1: using status of sensor $s_i$
+\begin{equation}
+    {\mu_i} =
+    \begin{cases}
+        1 & {\rm{if } } \quad \text{sensor} \, s_i \text{ is active} \\
+        0 & {\rm{otherwise}}
+    \end{cases}
+\end{equation}
+
+Decision variable 2: Sensing range of sensor $s_i$
+\begin{equation}
+    0 \leq {r_i} \leq {r_{max}}
+\end{equation}
+
+
+Objective 1 (reliability): Minimizing the number of active sensors:
+\begin{equation}
+    f_1 = \sum_{s_i \in S} \mu_i
+\end{equation}
+
+Objective 2 (Power): Minimizing the total power consumption:
+\begin{equation}
+    f_2 = \sum_{s_i \in S} p \cdot {r_i}^\alpha
+\end{equation}
+
+
+To ensure that the constructed barrier can effectively detect intruders moving across the monitored area, the following constraints must be satisfied:
+
+Constraint 1: Every point $p$ of the barrier is covered by at least one active
+used sensor $s_i$.
+
+\section{Proposed algorithm}\label{algorithms_sec}
+\subsection{MEOA/D}
+\subsection{NSGA-II}
+
+\section{Experimental results}
+\subsection{Parameter settings}
+
+
+
+\subsection{Experimental results}
+\section{Conclusion}\label{conclusion_sec}
+
+\appendix
+
+\bibliographystyle{elsarticle-num}
+\bibliography{references}
+\end{document}
+\endinput
