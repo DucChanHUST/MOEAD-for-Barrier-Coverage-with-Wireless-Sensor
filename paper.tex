@@ -101,13 +101,27 @@ power level, different sensor nodes have different communication range. Two sens
 nodes can communicate with each other if they are within the RC
 
 \subsection{Problem formulation}
-In this paper, we address the problem of sensor deployment for continuous monitoring of a linear segment on the x-axis with length L. We consider N static sensors that can be either activated or deactivated. These sensors are randomly distributed over the monitored area using helicopters or unmanned aerial vehicles (UAVs). Each sensor $s_i$ has a unique position $x_i$ and a specific sensing radius $r_i$. With this radius, the coverage range of sensor $s_i$ can be represented as the interval $C(s_i, r_i)$ of length $2r_i$ centered at $x_i$. Additionally, each sensor is associated with a cost $c(s_i, r_i)$, this cost represents the energy consumption during opearion. The objective is to choose a coverage radius $r_i$ for each sensor $s_i$ such that
+The primary assumptions and objectives of our work are outlined as follows: All nodes have an adjustable sensing range $r_i$, and the sensing coverage model is probabilistic. The sensing range $r_i$ is significantly smaller than the length and width of the ROI to be covered, rendering the boundary effect negligible and thus ignorable. Any point in the barrier coverage must be within the sensing range $r_i$ of at least one node. The nodes' locations are fixed and arbitrary.
+
+In this paper, we address the problem of sensor deployment for continuous monitoring of a linear segment on the x-axis with length L. We consider N static sensors that can be either activated or deactivated. These sensors are randomly distributed over the monitored area using helicopters or unmanned aerial vehicles (UAVs). Each sensor $s_i$ has a unique position $x_i$ and a specific sensing radius $r_i$. With this radius, the coverage range of sensor $s_i$ can be represented as the interval $C(s_i, r_i)$ of length $2r_i$ centered at $x_i$. Additionally, each sensor is associated with a cost $c(s_i, r_i)$, this cost represents the energy consumption during operation. The objective is to choose a coverage radius $r_i$ for each sensor $s_i$ such that
 \begin{align*}
     L & \subseteq \bigcup_{s \in S} C(s, r)
 \end{align*}
-and the total cost of the deployment $\sum_{s\in S}c(s, r)$ is minimized. This optimizationproblem is referred to as min-cost-linear-coverage (MCLC).
+and the total cost of the deployment $\sum_{s\in S}c(s, r)$ is minimized. This optimization problem is referred to as min-cost-linear-coverage (MCLC).
 
-Decision variable 1: using status of sensor $s_i$
+\textbf{Input:}
+\begin{itemize}
+  \item $N$: the number of deployed sensors.
+  \item $X = \{x_i\}$: x coordinates of the sensors.
+\end{itemize}
+
+\textbf{Output:}
+\begin{itemize}
+    \item A set of pareto optimal solutions for activating the sensors.
+\end{itemize}
+\textbf{Decision variable:}
+\begin{itemize}
+    \item using status of sensor $s_i$
 \begin{equation}
     {\mu_i} =
     \begin{cases}
@@ -116,27 +130,26 @@ Decision variable 1: using status of sensor $s_i$
     \end{cases}
 \end{equation}
 
-Decision variable 2: Sensing range of sensor $s_i$
+    \item Sensing range of sensor $s_i$
 \begin{equation}
     0 \leq {r_i} \leq {r_{max}}
 \end{equation}
+\end{itemize}
 
 
-Objective 1 (reliability): Minimizing the number of active sensors:
-\begin{equation}
-    f_1 = \sum_{s_i \in S} \mu_i
-\end{equation}
+\textbf{Objective:}
+\begin{itemize}
+    \item Reliability: Minimizing the number of active sensors:
+    \begin{equation}
+        f_1 = \sum_{s_i \in S} \mu_i
+    \end{equation}
+    \item Power: Minimizing the total power consumption:
+    
+    \begin{equation}
+        f_2 = \sum_{s_i \in S} p \cdot {r_i}^\alpha
+    \end{equation}
+\end{itemize}
 
-Objective 2 (Power): Minimizing the total power consumption:
-\begin{equation}
-    f_2 = \sum_{s_i \in S} p \cdot {r_i}^\alpha
-\end{equation}
-
-
-To ensure that the constructed barrier can effectively detect intruders moving across the monitored area, the following constraints must be satisfied:
-
-Constraint 1: Every point $p$ of the barrier is covered by at least one active
-used sensor $s_i$.
 
 \section{Proposed algorithm}\label{algorithms_sec}
 \subsection{MEOA/D}
