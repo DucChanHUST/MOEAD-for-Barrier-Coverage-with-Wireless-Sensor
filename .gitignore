@@ -7,3 +7,6 @@
 /paper.pdf
 /paper.spl
 /paper.synctex.gz
+.vscode/
+.venv/
+__pycache__/
