@@ -157,15 +157,15 @@ def radius_formalize_sensor(r_u1, x1, x2):
     x = symbols("x", integer=True, positive=True)
     expr = sp.exp(-beta * (x - x1 - (k - 1) * r_u1)) - gamma
     sol = sp.solveset(expr >= 0, x, domain=sp.S.Reals)
-    r_certain1 = sol.sup
+    x1_certain = sol.sup
 
-    if x1 + r_certain1 >= x2:
+    if x1_certain >= x2:
         return 0
 
-    r_certain1 = math.floor(r_certain1)
+    x1_certain = math.floor(x1_certain)
 
-    r_u2_max = (x2 - x1 - r_certain1) / (k - 1)
-    r_u2_min = (x2 - x1 - r_certain1) / k
+    r_u2_max = (x2 - x1_certain) / (k - 1)
+    r_u2_min = (x2 - x1_certain) / k
 
     r_u2, x = symbols("r_u2 x", integer=True, positive=True)
     expr = (
@@ -174,13 +174,21 @@ def radius_formalize_sensor(r_u1, x1, x2):
         - gamma
     )
 
-    for r2_val in range(math.ceil(r_u2_min), math.ceil(r_u2_max) + 1):
-        x_val = (x1 + x2 - (k - 1) * (r_u1 - r2_val)) / 2
-        print("x_val: ", x_val)
-        inequality = expr.subs({r_u2: r2_val, x: x_val})
-        print(inequality)
-        if inequality >= 0:
-            return r2_val
+    for r_u2_val in range(math.ceil(r_u2_min), math.ceil(r_u2_max) + 1):
+        x_mid = (x1 + x2 - (k - 1) * (r_u1 - r_u2_val)) / 2
+        inequality_mid = expr.subs({r_u2: r_u2_val, x: x_mid})
+        if inequality_mid < 0:
+            continue
+
+        inequality_left = expr.subs({r_u2: r_u2_val, x: x2 - k * r_u2_val})
+        if inequality_left < 0:
+            continue
+
+        inequality_right = expr.subs({r_u2: r_u2_val, x: x1 + k * r_u1})
+        if inequality_right < 0:
+            continue
+
+        return r_u2_val
 
     return 0
 
