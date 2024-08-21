@@ -3,6 +3,7 @@ import random
 import numpy as np
 import sympy as sp
 from sympy import symbols
+import multiprocessing
 
 input_file = "./dataset/100_1.txt"
 output_file = "./result/100_1.txt"
@@ -40,6 +41,14 @@ def init_lambda():
     return lamb
 
 
+lamb = init_lambda()
+pop_size = len(lamb)
+r = [None] * pop_size
+f1 = [None] * pop_size
+f2 = [None] * pop_size
+fitness = [None] * pop_size
+
+
 def search_neighbor(lamb):
     neighbor = []
     distance = []
@@ -62,6 +71,9 @@ def search_neighbor(lamb):
         index = index.tolist()
         neighbor.append(index[:neighbor_size])
     return neighbor
+
+
+neighbor = search_neighbor(lamb)
 
 
 def initIndividual():
@@ -91,6 +103,9 @@ def initPopulation(pop_size):
         individual = initValidIndividual()
         population.append(individual)
     return population
+
+
+population = initPopulation(pop_size)
 
 
 def mutation(individual):
@@ -135,13 +150,13 @@ def radius_formalize_outermost_sensor(x1, isFirst=True):
     # print(f"Tập nghiệm của r_u1: {sol}")
     if isinstance(sol, sp.Interval):
         min_r_u1 = sol.inf
-        print(f"Giá trị nhỏ nhất của r_u1: {math.ceil(min_r_u1)}")
+        # print(f"Giá trị nhỏ nhất của r_u1: {math.ceil(min_r_u1)}")
         if min_r_u1 < 0:
             return 0
         return math.ceil(min_r_u1)
     elif isinstance(sol, sp.Union):
         min_r_u1 = min([s.inf for s in sol.args if isinstance(s, sp.Interval)])
-        print(f"Giá trị nhỏ nhất của r_u1*: {math.ceil(min_r_u1)}")
+        # print(f"Giá trị nhỏ nhất của r_u1*: {math.ceil(min_r_u1)}")
         if min_r_u1 < 0:
             return 0
         return math.ceil(min_r_u1)
@@ -213,7 +228,7 @@ def radius_formalize(individual):
 
     r_last = radius_formalize_outermost_sensor(X[index[-1]], isFirst=False)
     if r_last > r_u[-1]:
-        print("r_last = ", r_last)
+        # print("r_last = ", r_last)
         r_u[-1] = r_last
 
     r_index = 0
@@ -236,6 +251,7 @@ def calculate_energy_consumption(r_u):
 
 
 def evaluate(individual):
+    print("individual = ", individual)
     all_r_u = radius_formalize(individual)
     total_active_sunsor = 0
     total_enegy_consumption = 0
@@ -255,98 +271,75 @@ def calculate_fitness(f1, f2, z, z_nad, lamb_i):
     return fitness
 
 
+def evolution(population, i, z, z_nad, fitness):
+    index1, index2 = random.sample(range(0, neighbor_size), 2)
+    parent1, parent2 = (
+        population[neighbor[i][index1]],
+        population[neighbor[i][index2]],
+    )
+    child = crossover(parent1, parent2)
+    total_active_sunsor, total_enegy_consumption, radii = evaluate(child)
+    child_fit = calculate_fitness(
+        total_active_sunsor, total_enegy_consumption, z, z_nad, lamb[i]
+    )
+
+    if child_fit < fitness[i]:
+        population[i] = child
+        fitness[i] = child_fit
+        r[i] = radii
+        f1[i] = total_active_sunsor
+        f2[i] = total_enegy_consumption
+
+
 def main():
-    lamb = init_lambda()
-    # lamb = [
-    #     [0.1, 0.9],
-    #     [0.2, 0.8],
-    #     [0.3, 0.7],
-    #     [0.4, 0.6],
-    #     [0.5, 0.5],
-    #     [0.6, 0.4],
-    #     [0.7, 0.3],
-    #     [0.8, 0.2],
-    #     [0.9, 0.1],
-    # ]
-
-    pop_size = len(lamb)
-    print("pop_size = ", pop_size)
-    # pop_size = 2
-    # pop_size = 9
-
-    neighbor = search_neighbor(lamb)
-    print("neighbor = ", neighbor)
-    # neighbor = [
-    #     [0, 1, 2, 3, 4],
-    #     [1, 0, 2, 3, 4],
-    #     [2, 1, 3, 4, 0],
-    #     [3, 4, 2, 5, 1],
-    #     [4, 3, 5, 2, 6],
-    #     [5, 4, 6, 3, 7],
-    #     [6, 5, 7, 4, 8],
-    #     [7, 8, 6, 5, 4],
-    #     [8, 7, 6, 5, 4],
-    # ]
-
-    population = initPopulation(pop_size)
-    r = [None] * pop_size
-    f1 = [None] * pop_size
-    f2 = [None] * pop_size
-    fitness = [None] * pop_size
-
     # init
+    manager = multiprocessing.Manager()
+    fitness = manager.list([None] * pop_size)
     for i in range(pop_size):
         f1[i], f2[i], r[i] = evaluate(population[i])
-        archive_individual.append(population[i])
-        archive_r.append(r[i])
-        archive_f.append([f1[i], f2[i]])
+        # archive_individual.append(population[i])
+        # archive_r.append(r[i])
+        # archive_f.append([f1[i], f2[i]])
 
     z = [min(f1), min(f2)]
     z_nad = [max(f1), max(f2)]
 
     for i in range(pop_size):
         fitness[i] = calculate_fitness(f1[i], f2[i], z, z_nad, lamb[i])
-        archive_fitness.append(fitness[i])
+        # archive_fitness.append(fitness[i])
+
+    print("z = ", z, "z_nad = ", z_nad)
+    print("fitness = ", fitness)
 
     for generation in range(max_generation):
-        print("generation =", generation)
+        print("----- generation =", generation)
+        process = []
         for i in range(pop_size):
-            print(i)
-            individual = population[i]
-            index1, index2 = random.sample(range(0, neighbor_size), 2)
-            parent1, parent2 = (
-                population[neighbor[i][index1]],
-                population[neighbor[i][index2]],
+            p = multiprocessing.Process(
+                target=evolution,
+                args=(
+                    population,
+                    i,
+                    z,
+                    z_nad,
+                    fitness,
+                ),
             )
+            process.append(p)
+            p.start()
 
-            child = crossover(parent1, parent2)
-
-            total_active_sunsor, total_enegy_consumption, radii = evaluate(child)
-            child_fit = calculate_fitness(
-                total_active_sunsor, total_enegy_consumption, z, z_nad, lamb[i]
-            )
-
-            if child_fit < fitness[i]:
-                population[i] = child
-                fitness[i] = child_fit
-                r[i] = radii
-                f1[i] = total_active_sunsor
-                f2[i] = total_enegy_consumption
-
-            archive_r.append(r[i])
-            archive_f.append([f1[i], f2[i]])
-            archive_fitness.append(fitness[i])
-            archive_individual.append(population[i])
+        for p in process:
+            p.join()
 
         z = [min(f1), min(f2)]
         z_nad = [max(f1), max(f2)]
 
-    for j in range(len(archive_r)):
-        print("j = ", j)
-        print("archive_individual = ", archive_individual[j])
-        print("archive_fitness = ", archive_fitness[j])
-        print("archive_r = ", archive_r[j])
-        print("archive_f = ", archive_f[j])
+    # for j in range(len(archive_r)):
+    #     print("j = ", j)
+    #     print("archive_individual = ", archive_individual[j])
+    #     print("archive_fitness = ", archive_fitness[j])
+    #     print("archive_r = ", archive_r[j])
+    #     print("archive_f = ", archive_f[j])
 
 
 if __name__ == "__main__":
