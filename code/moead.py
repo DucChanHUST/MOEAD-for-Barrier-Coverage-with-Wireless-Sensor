@@ -1,4 +1,5 @@
 import math
+import time
 import random
 import numpy as np
 import sympy as sp
@@ -12,10 +13,10 @@ X = np.loadtxt(input_file, dtype=int)
 N = len(X)
 
 p_mutation = 0.2
-neighbor_size = 3
+neighbor_size = 5
 barrier_length = 1000
 # max_generation = 1000
-max_generation = 0
+max_generation = 100
 k = 2
 gamma = 0.5
 beta = 1
@@ -33,7 +34,7 @@ archive_individual = []
 def init_lambda():
     lamb = []
     for i in range(9):
-        a = i * 3 + 1
+        a = i + 1
         b = 10 - a
         if b <= 0:
             continue
@@ -251,7 +252,6 @@ def calculate_energy_consumption(r_u):
 
 
 def evaluate(individual):
-    print("individual = ", individual)
     all_r_u = radius_formalize(individual)
     total_active_sunsor = 0
     total_enegy_consumption = 0
@@ -271,7 +271,7 @@ def calculate_fitness(f1, f2, z, z_nad, lamb_i):
     return fitness
 
 
-def evolution(population, i, z, z_nad, fitness):
+def evolution(population, i, z, z_nad, fitness, f1, f2):
     index1, index2 = random.sample(range(0, neighbor_size), 2)
     parent1, parent2 = (
         population[neighbor[i][index1]],
@@ -295,11 +295,15 @@ def main():
     # init
     manager = multiprocessing.Manager()
     fitness = manager.list([None] * pop_size)
+    f1 = manager.list([None] * pop_size)
+    f2 = manager.list([None] * pop_size)
+    archive_f = manager.list()
+
     for i in range(pop_size):
         f1[i], f2[i], r[i] = evaluate(population[i])
         # archive_individual.append(population[i])
         # archive_r.append(r[i])
-        # archive_f.append([f1[i], f2[i]])
+        archive_f.append([f1[i], f2[i]])
 
     z = [min(f1), min(f2)]
     z_nad = [max(f1), max(f2)]
@@ -307,9 +311,6 @@ def main():
     for i in range(pop_size):
         fitness[i] = calculate_fitness(f1[i], f2[i], z, z_nad, lamb[i])
         # archive_fitness.append(fitness[i])
-
-    print("z = ", z, "z_nad = ", z_nad)
-    print("fitness = ", fitness)
 
     for generation in range(max_generation):
         print("----- generation =", generation)
@@ -323,6 +324,8 @@ def main():
                     z,
                     z_nad,
                     fitness,
+                    f1,
+                    f2,
                 ),
             )
             process.append(p)
@@ -331,8 +334,10 @@ def main():
         for p in process:
             p.join()
 
-        z = [min(f1), min(f2)]
-        z_nad = [max(f1), max(f2)]
+        z = [min(min(f1), z[0]), min(min(f2), z[1])]
+        z_nad = [max(max(f1), z_nad[0]), max(max(f2), z_nad[1])]
+        for i in range(pop_size):
+            archive_f.append([f1[i], f2[i]])
 
     # for j in range(len(archive_r)):
     #     print("j = ", j)
@@ -340,7 +345,26 @@ def main():
     #     print("archive_fitness = ", archive_fitness[j])
     #     print("archive_r = ", archive_r[j])
     #     print("archive_f = ", archive_f[j])
+    for j in range(len(population)):
+        print("r = ", r[j])
+
+    aaa = []
+    for generation in range(max_generation + 1):
+        for j in range(len(population)):
+            aaa.append(
+                [
+                    archive_f[generation * pop_size + j][0] / z_nad[0],
+                    archive_f[generation * pop_size + j][1] / z_nad[1],
+                ],
+            )
+
+    with open(output_file, "w") as file:
+        for item in aaa:
+            file.write(f"{item[0]} {item[1]}\n")
 
 
 if __name__ == "__main__":
+    time_start = time.time()
     main()
+    time_end = time.time()
+    print("Time: ", time_end - time_start)
